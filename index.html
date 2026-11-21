@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS 6300 &middot; Lab 1 &mdash; From an empty package to a running ROS 2 graph</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1b1f24; --muted:#5b6672; --line:#d8dee6;
+    --accent:#0b874b; --accent-soft:#e6f4ec; --warn:#b4531a; --code:#f2f4f7;
+    --node:#0b874b; --node-dim:#b9c3cd; --wire:#8a97a4;
+  }
+  :root:not([data-theme="light"]){ }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14181d; --panel:#1b2026; --ink:#e8edf2; --muted:#9aa7b4; --line:#2c343d;
+      --accent:#35c07d; --accent-soft:#16301f; --warn:#e0924f; --code:#121720;
+      --node:#35c07d; --node-dim:#49535e; --wire:#6d7b89;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14181d; --panel:#1b2026; --ink:#e8edf2; --muted:#9aa7b4; --line:#2c343d;
+    --accent:#35c07d; --accent-soft:#16301f; --warn:#e0924f; --code:#121720;
+    --node:#35c07d; --node-dim:#49535e; --wire:#6d7b89;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1040px;margin:0 auto;padding:24px 18px 56px}
+  header h1{font-size:1.45rem;margin:0 0 4px}
+  header p{margin:0 0 20px;color:var(--muted)}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .tabs button{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:999px;padding:7px 14px;font-size:.85rem;cursor:pointer}
+  .tabs button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+  .stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+  @media (max-width:760px){ .stage{grid-template-columns:1fr} }
+  h2{font-size:1.1rem;margin:0 0 8px}
+  .lead{color:var(--muted);margin:0 0 14px}
+  ul{margin:0 0 12px;padding-left:20px} li{margin:4px 0}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.88em}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px;
+      overflow-x:auto;font-size:.82rem;margin:0 0 12px}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 12px;
+        border-radius:0 6px 6px 0;font-size:.9rem}
+  .note.warn{border-left-color:var(--warn);background:transparent}
+  svg{width:100%;height:auto;display:block}
+  .ctl{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  .ctl button{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:7px;padding:8px 14px;cursor:pointer;font-size:.9rem}
+  .ctl button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .ctl button:disabled{opacity:.4;cursor:default}
+  .ctl .count{margin-left:auto;color:var(--muted);font-size:.85rem}
+  .tree{font-size:.82rem;line-height:1.7;white-space:pre;overflow-x:auto}
+  .tree .on{color:var(--accent);font-weight:700}
+  .tree .off{color:var(--muted)}
+  footer{margin-top:22px;color:var(--muted);font-size:.85rem}
+  footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Lab 1 &mdash; From an empty package to a running ROS 2 graph</h1>
+    <p>Six steps, in the order you will actually build them. Use the arrow keys, or Play.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Steps"></nav>
+
+  <div class="panel">
+    <div class="stage">
+      <div>
+        <h2 id="s-title"></h2>
+        <p class="lead" id="s-lead"></p>
+        <div id="s-body"></div>
+      </div>
+      <div>
+        <svg id="s-svg" viewBox="0 0 420 260" role="img" aria-labelledby="s-alt"></svg>
+        <title id="s-alt"></title>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <button id="first" title="First step">&laquo; First</button>
+      <button id="prev" title="Previous step">&lsaquo; Prev</button>
+      <button id="play" class="primary">&#9654; Play</button>
+      <button id="next" title="Next step">Next &rsaquo;</button>
+      <button id="last" title="Last step">Last &raquo;</button>
+      <span class="count" id="count"></span>
+    </div>
+  </div>
+
+  <footer>
+    Part of <a href="https://wsu-roboracer.github.io/cs6300-course-site/weber_assignments/labs/lab1.html">Lab 1 &mdash; Introduction to ROS 2</a>,
+    CS 6300 Autonomous Racing, Weber State University.
+  </footer>
+</div>
+
+<script>
+// Each step: what the student is doing, and what the ROS graph looks like while they do it.
+// `graph` picks which nodes and wires are lit, so the picture grows with the lab.
+const STEPS = [
+  {
+    tab: "1 &middot; The package",
+    title: "A ROS 2 package is a folder with two promises",
+    lead: "Before any code runs, ROS 2 has to be told the package exists, what it depends on, and which commands it offers.",
+    graph: {nodes: [], wires: [], tree: 1},
+    body: `
+      <ul>
+        <li><code>package.xml</code> declares the dependency on <code>ackermann_msgs</code>. Without it,
+            your import works on your machine and fails on the grader's.</li>
+        <li><code>setup.py</code> registers each node as a console entry point, which is what turns
+            <code>talker.py</code> into the runnable command <code>ros2 run lab1_pkg talker</code>.</li>
+      </ul>
+      <div class="note">Part 1 is only these two files. Nothing you write later runs until they are right.</div>`
+  },
+  {
+    tab: "2 &middot; talker publishes",
+    title: "talker turns two parameters into drive commands",
+    lead: "A publisher, a timer, and two declared parameters. No subscriber yet, so nothing is listening.",
+    graph: {nodes: ["talker"], wires: [["talker", "drive", null]], tree: 2},
+    body: `
+      <ul>
+        <li>Declare parameters <code>v</code> and <code>d</code>, then read them each tick.</li>
+        <li>Build an <code>AckermannDriveStamped</code>, set <code>drive.speed</code> and
+            <code>drive.steering_angle</code>, publish on <code>/drive</code>.</li>
+      </ul>
+      <pre>ros2 run lab1_pkg talker --ros-args -p v:=1.5 -p d:=0.2</pre>
+      <div class="note">A topic with no subscriber is still a valid topic. <code>ros2 topic echo /drive</code>
+      is how you prove the node works before <code>relay</code> exists.</div>`
+  },
+  {
+    tab: "3 &middot; relay listens",
+    title: "relay subscribes, multiplies, and republishes",
+    lead: "The second node closes the loop: it reads /drive, triples both values, and sends them out on /drive_relay.",
+    graph: {nodes: ["talker", "relay"], wires: [["talker", "drive", "relay"], ["relay", "drive_relay", null]], tree: 3},
+    body: `
+      <ul>
+        <li>Subscribe to <code>/drive</code> with the same message type <code>talker</code> publishes.</li>
+        <li>In the callback, multiply <code>speed</code> and <code>steering_angle</code> by three.</li>
+        <li>Publish the new message on <code>/drive_relay</code>.</li>
+      </ul>
+      <div class="note warn">Type mismatch is the usual failure here. Subscribing with the wrong message
+      type does not crash &mdash; the callback simply never fires, and the topic looks dead.</div>`
+  },
+  {
+    tab: "4 &middot; The launch file",
+    title: "One command starts both nodes",
+    lead: "Two terminals is fine while you debug. The lab is graded on a launch file that brings the whole graph up at once.",
+    graph: {nodes: ["talker", "relay"], wires: [["talker", "drive", "relay"], ["relay", "drive_relay", null]], tree: 4, launch: true},
+    body: `
+      <ul>
+        <li>Add a <code>Node(...)</code> entry per node to <code>lab1_launch.py</code>.</li>
+        <li>Install the <code>launch/</code> folder in <code>setup.py</code>'s <code>data_files</code>,
+            or <code>ros2 launch</code> will not find it.</li>
+      </ul>
+      <pre>colcon build &amp;&amp; source install/setup.bash
+ros2 launch lab1_pkg lab1_launch.py</pre>
+      <div class="note warn">Forgetting the <code>data_files</code> entry is the most common Part 3 failure:
+      the build succeeds, and the launch file is simply not there.</div>`
+  },
+  {
+    tab: "5 &middot; See the graph",
+    title: "Prove it with the command line",
+    lead: "Everything you just built is inspectable. Part 4 asks you to look, and to write down what you saw.",
+    graph: {nodes: ["talker", "relay"], wires: [["talker", "drive", "relay"], ["relay", "drive_relay", null]], tree: 4, probe: true},
+    body: `
+      <pre>ros2 topic list          # /drive and /drive_relay
+ros2 topic info /drive   # one publisher, one subscriber
+ros2 topic echo /drive   # the values you set with -p
+ros2 node info /talker   # what talker publishes</pre>
+      <div class="note"><code>ros2 topic info /drive</code> showing <strong>one publisher and one
+      subscriber</strong> is the single best check that both nodes are wired together correctly.</div>`
+  },
+  {
+    tab: "6 &middot; What is graded",
+    title: "The check script scores Parts 1 to 3 before you submit",
+    lead: "Run it as often as you like. It starts your nodes, tests them, and prints a score.",
+    graph: {nodes: ["talker", "relay"], wires: [["talker", "drive", "relay"], ["relay", "drive_relay", null]], tree: 4, graded: true},
+    body: `
+      <pre>python3 src/&lt;your repo&gt;/tests/check_lab1.py</pre>
+      <ul>
+        <li><strong>25</strong> the package: dependency declared, both executables registered</li>
+        <li><strong>25</strong> the nodes behave as described</li>
+        <li><strong>25</strong> the launch file is installed and starts both</li>
+        <li><strong>25</strong> the written questions in <code>SUBMISSION.md</code>, graded by hand</li>
+      </ul>
+      <div class="note">Stop any nodes you have running first, or the script's own nodes collide with yours.</div>`
+  }
+];
+
+const FILES = [
+  ["lab1_pkg/", 0], ["  package.xml", 1], ["  setup.py", 1],
+  ["  lab1_pkg/talker.py", 2], ["  lab1_pkg/relay.py", 3],
+  ["  launch/lab1_launch.py", 4], ["tests/check_lab1.py", 6]
+];
+
+const tabsEl = document.getElementById("tabs");
+const els = {t: document.getElementById("s-title"), l: document.getElementById("s-lead"),
+             b: document.getElementById("s-body"), svg: document.getElementById("s-svg"),
+             alt: document.getElementById("s-alt"), count: document.getElementById("count")};
+let i = 0, timer = null;
+
+STEPS.forEach((s, n) => {
+  const b = document.createElement("button");
+  b.innerHTML = s.tab;
+  b.addEventListener("click", () => { stop(); go(n); });
+  tabsEl.appendChild(b);
+});
+
+function box(x, y, label, lit){
+  const fill = lit ? "var(--node)" : "var(--node-dim)";
+  return `<rect x="${x}" y="${y}" width="118" height="44" rx="8" fill="${fill}"/>
+          <text x="${x + 59}" y="${y + 27}" text-anchor="middle" fill="#fff"
+                font-size="14" font-weight="600" font-family="monospace">${label}</text>`;
+}
+function wire(x1, y1, x2, y2, label){
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--wire)"
+            stroke-width="2" marker-end="url(#a)"/>
+          <text x="${(x1 + x2) / 2}" y="${y1 - 8}" text-anchor="middle" fill="var(--muted)"
+            font-size="12" font-family="monospace">${label}</text>`;
+}
+
+function draw(step){
+  const g = step.graph, has = n => g.nodes.includes(n);
+  let s = `<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+             markerHeight="6" orient="auto-start-reverse">
+             <path d="M0,0 L10,5 L0,10 z" fill="var(--wire)"/></marker></defs>`;
+  // The file tree doubles as the "where am I" indicator.
+  s += `<text x="0" y="14" fill="var(--muted)" font-size="12" font-family="monospace">the package</text>`;
+  FILES.forEach((f, n) => {
+    const lit = g.tree >= f[1] && f[1] > 0;
+    const colour = f[1] === 0 ? "var(--ink)" : (lit ? "var(--accent)" : "var(--node-dim)");
+    const weight = lit ? "700" : "400";
+    s += `<text x="0" y="${36 + n * 17}" fill="${colour}" font-size="12.5"
+            font-weight="${weight}" font-family="monospace">${f[0].replace(/ /g, " ")}</text>`;
+  });
+  if (has("talker")) s += box(230, 40, "talker", true);
+  if (has("relay"))  s += box(230, 150, "relay", true);
+  g.wires.forEach(w => {
+    if (w[0] === "talker" && w[2] === "relay") s += wire(289, 84, 289, 150, "/" + w[1]);
+    else if (w[0] === "talker") s += wire(289, 84, 289, 128, "/" + w[1]);
+    else if (w[0] === "relay")  s += wire(289, 194, 289, 236, "/" + w[1]);
+  });
+  if (g.launch) s += `<rect x="216" y="24" width="146" height="190" rx="10" fill="none"
+      stroke="var(--accent)" stroke-dasharray="5 4" stroke-width="2"/>
+      <text x="289" y="18" text-anchor="middle" fill="var(--accent)" font-size="12"
+        font-weight="600" font-family="monospace">lab1_launch.py</text>`;
+  if (g.probe) s += `<text x="289" y="250" text-anchor="middle" fill="var(--muted)"
+      font-size="12" font-family="monospace">ros2 topic echo</text>`;
+  if (g.graded) s += `<text x="289" y="250" text-anchor="middle" fill="var(--accent)"
+      font-size="12" font-weight="600" font-family="monospace">check_lab1.py</text>`;
+  return s;
+}
+
+function go(n){
+  i = (n + STEPS.length) % STEPS.length;
+  const s = STEPS[i];
+  els.t.textContent = s.title;
+  els.l.textContent = s.lead;
+  els.b.innerHTML = s.body;
+  els.svg.innerHTML = draw(s);
+  els.alt.textContent = s.title;
+  els.count.textContent = `Step ${i + 1} of ${STEPS.length}`;
+  [...tabsEl.children].forEach((b, n2) => b.setAttribute("aria-current", n2 === i ? "true" : "false"));
+  document.getElementById("prev").disabled = i === 0;
+  document.getElementById("next").disabled = i === STEPS.length - 1;
+  document.getElementById("first").disabled = i === 0;
+  document.getElementById("last").disabled = i === STEPS.length - 1;
+}
+
+function stop(){
+  if (timer){ clearInterval(timer); timer = null;
+    document.getElementById("play").innerHTML = "&#9654; Play"; }
+}
+document.getElementById("play").addEventListener("click", () => {
+  if (timer) return stop();
+  document.getElementById("play").innerHTML = "&#10073;&#10073; Pause";
+  timer = setInterval(() => {
+    if (i === STEPS.length - 1){ stop(); return; }
+    go(i + 1);
+  }, 4200);
+});
+document.getElementById("first").addEventListener("click", () => { stop(); go(0); });
+document.getElementById("last").addEventListener("click", () => { stop(); go(STEPS.length - 1); });
+document.getElementById("prev").addEventListener("click", () => { stop(); go(i - 1); });
+document.getElementById("next").addEventListener("click", () => { stop(); go(i + 1); });
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight"){ stop(); go(i + 1); }
+  if (e.key === "ArrowLeft"){ stop(); go(i - 1); }
+});
+go(0);
+</script>
+</body>
+</html>
